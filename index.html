@@ -1,0 +1,965 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>¿Quién te ve en LinkedIn?</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: un escenario a oscuras. Ser visible = estar bajo la luz. Cada etapa es un objeto para tocar,
+   con texto mínimo y el dato desplegable. Diseño deliberadamente de un solo tema (oscuro). */
+:root{
+  --night:#0C0E1A; --stage:#141729; --raise:#1C2036; --ink:#EEF0F7; --dim:#8D93AD; --faint:#2A2F4A;
+  --light:#FFD43B; --light-ink:#14120A; --paid:#3DD598; --women:#B49CFF; --informal:#3CC6DC; --alert:#FF7A59;
+  --font-display:"Bricolage Grotesque", "Arial Narrow", system-ui, sans-serif;
+  --font-body:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --s--1:.8125rem; --s0:1rem; --s1:1.1875rem; --s2:1.5rem; --s3:clamp(1.9rem, 4vw, 2.75rem); --s4:clamp(2.4rem, 6.4vw, 4.75rem);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--night); color:var(--ink); font-family:var(--font-body); font-size:var(--s0); line-height:1.55;
+  padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px));}
+body::before{content:""; position:fixed; inset:0 0 auto; height:env(safe-area-inset-top, 0px); z-index:10; background:var(--night)}
+@media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto} *,*::before,*::after{animation:none!important; transition:none!important} }
+.wrap{max-width:1160px; margin:0 auto}
+h1,h2,h3{font-family:var(--font-display); text-wrap:balance; line-height:1.04; margin:0; letter-spacing:-.015em}
+p{margin:0}
+a{color:inherit; text-underline-offset:3px; text-decoration-thickness:1px}
+button{font:inherit; color:inherit; cursor:pointer}
+:focus-visible{outline:3px solid var(--light); outline-offset:3px; border-radius:6px}
+.eyebrow{font-family:var(--font-mono); font-size:var(--s--1); letter-spacing:.1em; text-transform:uppercase; color:var(--dim)}
+.tabular{font-variant-numeric:tabular-nums}
+.hl{color:var(--light-ink); background:var(--light); padding:0 .14em; border-radius:3px; box-decoration-break:clone; -webkit-box-decoration-break:clone}
+
+.nav{position:sticky; top:env(safe-area-inset-top, 0px); z-index:6; background:rgba(12,14,26,.86); backdrop-filter:blur(10px); border-bottom:1px solid var(--faint); margin:0 calc(-1 * max(16px, env(safe-area-inset-left, 0px)))}
+.nav-in{max-width:1160px; margin:0 auto; display:flex; gap:6px; align-items:center; padding-block:8px; padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px)); overflow-x:auto; scrollbar-width:none}
+.nav-in::-webkit-scrollbar{display:none}
+.brand{font-family:var(--font-display); font-weight:800; margin-right:10px; white-space:nowrap}
+.nav a{display:flex; align-items:center; gap:6px; text-decoration:none; font-size:var(--s--1); color:var(--dim); padding:5px 10px; border-radius:999px; white-space:nowrap}
+.nav a b{width:18px; height:18px; border-radius:50%; display:grid; place-items:center; font-size:.7rem; background:var(--faint); color:var(--ink); font-weight:600}
+.nav a.on{background:var(--light); color:var(--light-ink)}
+.nav a.on b{background:var(--light-ink); color:var(--light)}
+
+.btn{border:1px solid var(--ink); background:var(--ink); color:var(--night); border-radius:999px; padding:8px 16px; font-weight:600; font-size:.9rem; display:inline-flex; align-items:center; gap:8px}
+.btn.ghost{background:transparent; color:var(--ink); border-color:var(--faint)}
+.btn.ghost:hover{border-color:var(--ink)}
+.btn:disabled{opacity:.35; cursor:not-allowed}
+.toggle{display:inline-flex; align-items:center; gap:10px; font-size:.9rem; font-weight:500; cursor:pointer; user-select:none}
+.toggle input{position:absolute; opacity:0; width:1px; height:1px}
+.toggle .tr{width:44px; height:24px; border-radius:999px; background:var(--faint); position:relative; flex:none; transition:background .2s}
+.toggle .tr::after{content:""; position:absolute; top:3px; left:3px; width:18px; height:18px; border-radius:50%; background:var(--ink); transition:transform .2s}
+.toggle input:checked + .tr{background:var(--light)}
+.toggle input:checked + .tr::after{transform:translateX(20px); background:var(--light-ink)}
+.toggle input:focus-visible + .tr{outline:3px solid var(--light); outline-offset:2px}
+
+.play{position:relative; display:inline-flex; align-items:center; gap:10px; border:none; background:var(--light); color:var(--light-ink); border-radius:999px; padding:6px 14px 6px 6px; font-weight:600; font-size:.875rem; text-align:left; animation:ping 2.6s ease-out infinite}
+.play .ic{width:30px; height:30px; border-radius:50%; background:var(--light-ink); color:var(--light); display:grid; place-items:center; font-size:.72rem; flex:none}
+.play small{display:block; font-family:var(--font-mono); font-size:.62rem; letter-spacing:.08em; text-transform:uppercase; opacity:.7; font-weight:500}
+@keyframes ping{0%{box-shadow:0 0 0 0 rgba(255,212,59,.5)} 70%{box-shadow:0 0 0 14px rgba(255,212,59,0)} 100%{box-shadow:0 0 0 0 rgba(255,212,59,0)}}
+
+.sec{padding-block:72px 24px}
+.sec-head{display:grid; grid-template-columns:minmax(0,1fr) auto; gap:20px; align-items:end; margin-bottom:24px}
+.sec-head h2{font-size:var(--s3); font-weight:800; margin-top:10px; max-width:22ch}
+.sec-head .sub{margin-top:12px; color:var(--dim); font-size:var(--s1); max-width:56ch}
+.box{background:var(--stage); border:1px solid var(--faint); border-radius:18px; padding:20px; position:relative; min-width:0}
+details.more{margin-top:16px; border-top:1px solid var(--faint); padding-top:12px}
+details.more summary{cursor:pointer; font-family:var(--font-mono); font-size:var(--s--1); color:var(--dim); list-style:none; display:inline-flex; gap:8px; align-items:center}
+details.more summary::-webkit-details-marker{display:none}
+details.more summary::before{content:"+"; width:18px; height:18px; border:1px solid var(--dim); border-radius:50%; display:grid; place-items:center; font-size:.8rem}
+details.more[open] summary::before{content:"–"}
+details.more .txt{margin-top:10px; color:var(--dim); max-width:72ch; display:grid; gap:8px; font-size:.95rem}
+details.more .txt b{color:var(--ink); font-weight:600}
+.src{font-size:var(--s--1); color:var(--dim)}
+.src a{color:var(--dim)}
+.note{font-size:var(--s--1); color:var(--dim)}
+
+/* HERO */
+.hero{padding-block:28px 8px}
+.dark{position:relative; height:clamp(420px, 60vh, 560px); border-radius:22px; overflow:hidden; background:var(--stage); border:1px solid var(--faint); touch-action:pan-y; cursor:crosshair}
+.crowd{position:absolute; inset:0; display:grid; grid-template-columns:repeat(6, 1fr); grid-auto-rows:1fr; gap:10px; padding:46px 16px 16px}
+.chip{border-radius:12px; background:var(--raise); display:flex; align-items:center; gap:10px; padding:10px; min-width:0; position:relative; transition:transform .3s}
+.chip .av{width:34px; height:34px; border-radius:50%; flex:none; display:grid; place-items:center; font-family:var(--font-display); font-weight:700; background:var(--faint)}
+.chip .meta{min-width:0; display:grid; gap:5px; flex:1}
+.chip .meta span{font-size:.82rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.chip .meta i{display:block; height:5px; border-radius:3px; background:var(--faint)}
+.chip .pos{position:absolute; top:6px; right:8px; font-family:var(--font-mono); font-size:.66rem; color:var(--dim)}
+.chip.top{outline:2px solid var(--light); z-index:2}
+.chip.top .av{background:var(--light); color:var(--light-ink)}
+.chip.found{z-index:2; transform:scale(1.05)}
+.chip.found .av{background:var(--informal); color:var(--night)}
+.shade{position:absolute; inset:0; pointer-events:none; z-index:1;
+  background:radial-gradient(circle at var(--x,50%) var(--y,40%), rgba(12,14,26,0) 0, rgba(12,14,26,0) 90px, rgba(12,14,26,.93) 170px)}
+.hero-copy{display:grid; grid-template-columns:minmax(0,1.5fr) minmax(0,1fr); gap:32px; align-items:end; padding-block:20px 28px}
+.hero-copy h1{font-size:var(--s4); font-weight:800; max-width:17ch}
+.hero-side p{color:var(--dim); font-size:var(--s1); max-width:40ch}
+.hero-copy .row{display:flex; flex-wrap:wrap; gap:10px; margin-top:16px}
+.toplbl{position:absolute; z-index:3; top:14px; left:16px; font-family:var(--font-mono); font-size:.72rem; background:var(--light); color:var(--light-ink); padding:4px 10px; border-radius:999px}
+.hint{position:absolute; z-index:3; bottom:14px; right:16px; font-family:var(--font-mono); font-size:.72rem; color:var(--ink); background:rgba(12,14,26,.85); padding:4px 10px; border-radius:999px}
+.found-tip{position:absolute; z-index:4; pointer-events:none; background:var(--informal); color:var(--night); font-size:.8rem; font-weight:600; padding:6px 10px; border-radius:8px; transform:translate(-50%, -120%); white-space:nowrap}
+
+/* 1 */
+.scan-grid{display:grid; grid-template-columns:1fr 1fr; gap:16px}
+.card{background:var(--raise); border-radius:14px; padding:16px; position:relative; overflow:hidden; min-width:0}
+.card-top{display:flex; align-items:center; gap:12px; margin-bottom:12px}
+.card-top .av{width:46px; height:46px; border-radius:50%; display:grid; place-items:center; font-family:var(--font-display); font-weight:800; font-size:1.2rem; color:var(--night)}
+.card-top h3{font-size:var(--s1)}
+.card-top p{font-size:var(--s--1); color:var(--dim)}
+.ring{margin-left:auto; width:58px; height:58px; position:relative; flex:none}
+.ring svg{width:100%; height:100%; transform:rotate(-90deg)}
+.ring .arc{transition:stroke-dasharray .2s}
+.ring b{position:absolute; inset:0; display:grid; place-items:center; font-family:var(--font-mono); font-size:.8rem}
+.fields{list-style:none; margin:0; padding:0; display:grid; gap:8px}
+.fields li{display:grid; gap:2px; font-size:.86rem; padding:6px 8px; border-radius:7px; transition:background .25s, color .25s, filter .25s, opacity .25s}
+.fields .k{font-family:var(--font-mono); font-size:.64rem; letter-spacing:.08em; text-transform:uppercase; color:var(--dim)}
+.fields li.ok.on{background:var(--light); color:var(--light-ink)}
+.fields li.ok.on .k{color:var(--light-ink); opacity:.7}
+.fields li.no.on{filter:blur(1.4px); opacity:.5; background:repeating-linear-gradient(90deg, rgba(255,122,89,.18) 0 3px, transparent 3px 6px)}
+.beam{position:absolute; left:0; right:0; height:3px; background:var(--light); box-shadow:0 0 18px 6px rgba(255,212,59,.45); z-index:2; pointer-events:none; top:0; opacity:0; transition:opacity .2s}
+.scanning .beam{opacity:1}
+.scan-ctrl{display:flex; flex-wrap:wrap; gap:14px; align-items:center; margin-top:16px}
+.scan-ctrl input[type=range]{flex:1; min-width:160px; accent-color:var(--light)}
+
+/* 2 */
+.rk-grid{display:grid; grid-template-columns:minmax(0,1.05fr) minmax(0,1fr); gap:20px}
+.ladder{position:relative; height:calc(12 * 38px + 6px)}
+.cone{position:absolute; left:0; right:0; top:0; height:calc(5 * 38px + 2px); border-radius:12px; background:linear-gradient(180deg, rgba(255,212,59,.22), rgba(255,212,59,.05)); border:1px dashed rgba(255,212,59,.5)}
+.cone span{position:absolute; right:10px; bottom:-18px; font-family:var(--font-mono); font-size:.64rem; color:var(--light)}
+.rrow{position:absolute; left:6px; right:6px; height:32px; display:grid; grid-template-columns:22px 30px minmax(0,1fr) 64px; gap:8px; align-items:center; transition:top .55s cubic-bezier(.2,.8,.2,1); font-size:.88rem}
+.rrow .n{font-family:var(--font-mono); font-size:.72rem; color:var(--dim); text-align:right}
+.rrow .av{width:28px; height:28px; border-radius:50%; display:grid; place-items:center; font-weight:700; font-size:.78rem; position:relative}
+.rrow .av.w{background:var(--women); color:var(--night)}
+.rrow .av.m{border:2px solid var(--ink)}
+.rrow .av.flash::after{content:""; position:absolute; inset:-4px; border-radius:50%; border:2px solid var(--light); animation:flash .6s ease-out forwards}
+@keyframes flash{from{transform:scale(.7); opacity:1} to{transform:scale(1.6); opacity:0}}
+.rrow .nm{display:flex; gap:6px; align-items:center; white-space:nowrap; overflow:hidden}
+.inf{font-family:var(--font-mono); font-size:.62rem; border:1px solid var(--informal); color:var(--informal); border-radius:4px; padding:0 4px}
+.rrow .bar{height:6px; background:var(--faint); border-radius:3px; overflow:hidden}
+.rrow .bar i{display:block; height:100%; background:var(--dim); transition:width .55s}
+.rrow.lit .bar i{background:var(--light)}
+.chart svg{width:100%; height:auto; display:block}
+.chart text{fill:var(--dim); font-family:var(--font-mono); font-size:10px}
+.legend{display:flex; flex-wrap:wrap; gap:12px; font-size:var(--s--1); color:var(--dim); margin-top:8px}
+.legend span{display:inline-flex; gap:6px; align-items:center}
+.legend i{display:inline-block; width:14px; height:3px; border-radius:2px}
+.ctrl{display:flex; flex-wrap:wrap; gap:8px; align-items:center}
+.ctrl .count{margin-left:auto; font-family:var(--font-mono); font-size:var(--s--1); color:var(--dim)}
+.verdict{margin-top:18px; padding:12px 14px; border-radius:12px; background:var(--raise); font-size:.95rem; min-height:48px}
+.verdict b{color:var(--light)}
+.bigpair{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px}
+.bigpair div{background:var(--raise); border-radius:12px; padding:10px 12px}
+.bigpair b{display:block; font-family:var(--font-display); font-size:2.2rem; line-height:1}
+.bigpair span{font-size:var(--s--1); color:var(--dim)}
+
+/* 3 */
+.pay-grid{display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,1fr); gap:20px}
+.flow svg{width:100%; height:auto; display:block}
+.flow .node{cursor:pointer; outline:none}
+.flow .node:focus-visible circle{stroke:#FFD43B}
+.flow .node.sel circle{stroke-width:5}
+.flow text{font-family:var(--font-body); font-size:13px; fill:var(--ink)}
+.flow .lbl{font-family:var(--font-mono); font-size:10px; fill:var(--dim)}
+.side-card{background:var(--raise); border-radius:12px; padding:14px; display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:12px; font-size:.88rem; margin-top:10px}
+.side-card .k{display:block; font-family:var(--font-mono); font-size:.64rem; letter-spacing:.08em; text-transform:uppercase; color:var(--dim)}
+.inbox{display:grid; gap:8px; margin-top:14px}
+.app{display:flex; align-items:center; gap:10px; padding:10px 12px; background:var(--raise); border-radius:12px; border:1px solid transparent; transition:transform .4s, border-color .3s, box-shadow .3s}
+.app .av{width:30px; height:30px; border-radius:50%; background:var(--faint); display:grid; place-items:center; font-weight:700; font-size:.8rem; flex:none}
+.app .badge{margin-left:auto; font-family:var(--font-mono); font-size:.68rem; background:var(--paid); color:var(--night); padding:3px 9px; border-radius:999px; font-weight:600; white-space:nowrap}
+.app.paid{border-color:var(--paid); box-shadow:0 0 24px rgba(61,213,152,.25); transform:translateX(6px)}
+.meter{margin-top:16px; display:grid; gap:8px}
+.meter .m{display:grid; grid-template-columns:110px minmax(0,1fr) 42px; gap:10px; align-items:center; font-size:var(--s--1); color:var(--dim)}
+.meter .t{height:14px; background:var(--faint); border-radius:4px; overflow:hidden}
+.meter .t i{display:block; height:100%; background:var(--dim); transition:width .7s cubic-bezier(.2,.8,.2,1)}
+.meter .m.p .t i{background:var(--paid)}
+.money{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:16px}
+.money div{border-top:2px solid var(--paid); padding-top:8px}
+.money b{font-family:var(--font-display); font-size:1.6rem; display:block; line-height:1.1}
+.money span{font-size:var(--s--1); color:var(--dim)}
+
+/* 4 */
+.ctx-grid{display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,1fr); gap:24px; align-items:center}
+.people{display:grid; grid-template-columns:repeat(20, 1fr); gap:4px}
+.people i{aspect-ratio:3/5; background:var(--faint); transition:background .25s;
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 20'%3E%3Ccircle cx='6' cy='4' r='3.4'/%3E%3Cpath d='M1 20v-8a5 5 0 0 1 10 0v8z'/%3E%3C/svg%3E") center/contain no-repeat;
+          mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 20'%3E%3Ccircle cx='6' cy='4' r='3.4'/%3E%3Cpath d='M1 20v-8a5 5 0 0 1 10 0v8z'/%3E%3C/svg%3E") center/contain no-repeat}
+.people i.on{background:var(--informal)}
+.tabs{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:18px}
+.tab{border:1px solid var(--faint); background:transparent; border-radius:999px; padding:7px 14px; font-size:.88rem}
+.tab[aria-selected="true"]{background:var(--informal); color:var(--night); border-color:var(--informal); font-weight:600}
+.huge{font-family:var(--font-display); font-weight:800; font-size:clamp(4.5rem, 14vw, 9rem); line-height:.9; color:var(--informal)}
+.huge small{font-size:.35em; color:var(--dim)}
+
+/* 5 */
+.filters{display:flex; flex-wrap:wrap; gap:6px}
+.fchip{border:1px solid var(--faint); background:transparent; border-radius:999px; padding:6px 12px; font-size:.85rem; display:inline-flex; gap:8px; align-items:center}
+.fchip i{width:10px; height:10px; border-radius:50%}
+.fchip[aria-pressed="true"]{border-color:var(--ink); background:var(--raise)}
+.track{display:grid; grid-auto-flow:column; grid-auto-columns:minmax(230px, 270px); gap:14px; overflow-x:auto; scroll-snap-type:x mandatory; padding:6px 2px 14px; scrollbar-color:var(--faint) transparent}
+.ev{scroll-snap-align:start; background:var(--raise); border-radius:14px; padding:16px; display:grid; gap:8px; align-content:start; border-top:4px solid var(--c); min-height:230px}
+.ev .yr{font-family:var(--font-display); font-weight:800; font-size:2.6rem; line-height:1; color:var(--c)}
+.ev .lane{font-family:var(--font-mono); font-size:.66rem; letter-spacing:.08em; text-transform:uppercase; color:var(--dim)}
+.ev h3{font-size:1.1rem}
+.ev p{font-size:.86rem; color:var(--dim)}
+.arrows{display:flex; gap:8px}
+.arr{width:40px; height:40px; border-radius:50%; border:1px solid var(--faint); background:transparent; font-size:1.1rem}
+
+/* Cierre */
+.layers{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:18px}
+.layer{border:1px solid var(--faint); background:transparent; border-radius:999px; padding:8px 14px; font-size:.88rem}
+.layer[aria-pressed="true"]{background:var(--ink); color:var(--night); border-color:var(--ink); font-weight:600}
+.duo{display:grid; grid-template-columns:1fr 1fr; gap:16px}
+.person{border-radius:18px; padding:22px; background:var(--raise); text-align:center; transition:box-shadow .5s, opacity .5s}
+.person .av{width:96px; height:96px; margin:0 auto; border-radius:50%; display:grid; place-items:center; font-family:var(--font-display); font-weight:800; font-size:2.4rem; background:var(--light); color:var(--light-ink); transition:background .5s, color .5s}
+.person h3{margin-top:12px; font-size:var(--s2)}
+.person ul{list-style:none; margin:12px 0 0; padding:0; display:grid; gap:4px; font-size:.84rem; color:var(--dim); min-height:110px}
+.person .vis{height:10px; border-radius:5px; background:var(--faint); overflow:hidden; margin-top:12px}
+.person .vis i{display:block; height:100%; background:var(--light); transition:width .6s}
+.thesis{margin-top:56px; font-size:clamp(2rem, 5vw, 3.6rem); font-weight:800; max-width:20ch}
+.qs{margin-top:22px; display:grid; gap:6px; font-family:var(--font-display); font-size:var(--s1); color:var(--dim)}
+
+footer{border-top:1px solid var(--faint); margin-top:64px; padding-block:24px 48px; display:grid; gap:16px}
+footer .cred{display:flex; flex-wrap:wrap; justify-content:space-between; gap:8px 24px; font-size:var(--s--1); color:var(--dim)}
+.srclist{margin:12px 0 0; padding-left:1.2em; display:grid; gap:6px; font-size:.85rem; color:var(--dim)}
+.srclist a{word-break:break-word}
+
+dialog{border:none; padding:0; border-radius:18px; background:var(--stage); color:var(--ink); width:min(780px, calc(100vw - 32px)); max-height:calc(100vh - 32px); box-shadow:0 30px 80px rgba(0,0,0,.6)}
+dialog::backdrop{background:rgba(4,5,10,.78)}
+.vd-head{display:flex; justify-content:space-between; gap:16px; padding:18px 20px 12px}
+.vd-head h3{font-size:var(--s2); margin-top:4px}
+.vd-x{width:38px; height:38px; flex:none; border-radius:50%; border:1px solid var(--faint); background:transparent}
+.vd-body{padding:0 20px 20px}
+.vd-body video{width:100%; max-height:62vh; border-radius:12px; background:#000; display:block}
+.vd-ph{border:1px dashed var(--dim); border-radius:12px; padding:18px; display:grid; gap:10px}
+.vd-ph .stamp{font-family:var(--font-mono); font-size:.7rem; letter-spacing:.1em; text-transform:uppercase; color:var(--alert)}
+.vd-ph ul{margin:0; padding-left:1.1em; display:grid; gap:4px; color:var(--dim)}
+
+/* 1b: el feed */
+.ai-box{margin-top:16px}
+.ai-head{display:flex; flex-wrap:wrap; gap:14px; justify-content:space-between; align-items:end; margin-bottom:16px}
+.ai-head h3{font-size:var(--s2); max-width:24ch; margin-top:8px}
+.ai-grid{display:grid; grid-template-columns:repeat(20, 1fr); gap:5px}
+.ai-grid i{aspect-ratio:4/3; border-radius:3px; background:var(--raise); display:flex; flex-direction:column; justify-content:center; gap:3px; padding:0 3px; transition:background .4s}
+.ai-grid i::before,.ai-grid i::after{content:""; height:2px; border-radius:1px; background:var(--dim); opacity:.7; transition:width .5s, background .4s}
+.ai-grid i::before{width:var(--a)}
+.ai-grid i::after{width:var(--b)}
+.ai-grid i.ai{background:var(--light)}
+.ai-grid i.ai::before{width:88%; background:var(--light-ink)}
+.ai-grid i.ai::after{width:58%; background:var(--light-ink)}
+.ai-foot{display:flex; flex-wrap:wrap; gap:6px 16px; align-items:baseline; margin-top:14px}
+.ai-foot p{max-width:46ch; min-width:0}
+.huge-s{font-family:var(--font-display); font-weight:800; font-size:clamp(2.6rem, 7vw, 4rem); line-height:1; color:var(--light)}
+.huge-s small{font-size:.4em; color:var(--dim)}
+
+/* Cierre: tu turno */
+.you{margin-top:20px}
+.you h3{font-size:var(--s2); margin-top:8px}
+.you .sub2{color:var(--dim); margin-top:6px}
+.you-qs{display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:12px; margin-top:18px}
+.you-track{position:relative; height:56px; margin-top:26px; border-radius:12px; border:1px solid var(--faint);
+  background:linear-gradient(90deg, rgba(255,212,59,.38), rgba(255,212,59,.1) 28%, var(--raise) 42%)}
+.you-track .lbl{position:absolute; bottom:-22px; font-family:var(--font-mono); font-size:.66rem; color:var(--dim)}
+.spot{position:absolute; top:50%; left:80%; transform:translate(-50%,-50%); width:42px; height:42px; border-radius:50%; background:var(--informal); color:var(--night); display:grid; place-items:center; font-weight:700; font-size:.75rem; transition:left .6s cubic-bezier(.2,.8,.2,1), background .4s, box-shadow .4s}
+.spot.lit{background:var(--light); color:var(--light-ink); box-shadow:0 0 26px rgba(255,212,59,.6)}
+.you-out{margin-top:36px; font-size:var(--s1); min-height:3.2em; max-width:56ch}
+@media (max-width: 640px){ .ai-grid{grid-template-columns:repeat(10, 1fr)} .you-qs{grid-template-columns:minmax(0,1fr)} }
+
+@media (max-width: 900px){
+  .rk-grid,.pay-grid,.ctx-grid{grid-template-columns:minmax(0,1fr)}
+  .sec{padding-block:56px 16px}
+}
+@media (max-width: 640px){
+  .crowd{grid-template-columns:repeat(3, 1fr); gap:8px; padding:44px 10px 44px}
+  .chip .meta i{display:none}
+  .scan-grid,.duo{grid-template-columns:minmax(0,1fr)}
+  .side-card{grid-template-columns:minmax(0,1fr)}
+  .people{grid-template-columns:repeat(10, 1fr)}
+  .sec-head{grid-template-columns:minmax(0,1fr)}
+  .hero-copy{grid-template-columns:minmax(0,1fr); gap:16px}
+  .hint{left:16px; right:auto}
+  .person ul{min-height:0}
+  .meter .m{grid-template-columns:96px minmax(0,1fr) 36px}
+}
+</style>
+
+<nav class="nav" aria-label="Etapas">
+  <div class="nav-in">
+    <span class="brand">¿Quién te ve?</span>
+    <a href="#datos"><b>1</b>Los datos</a>
+    <a href="#ranking"><b>2</b>El ranking</a>
+    <a href="#pago"><b>3</b>El pago</a>
+    <a href="#contexto"><b>4</b>El contexto</a>
+    <a href="#reglas"><b>5</b>Las reglas</a>
+    <a href="#cierre"><b>→</b>Cierre</a>
+  </div>
+</nav>
+
+<main class="wrap">
+
+  <section class="hero" aria-labelledby="h1">
+    <div class="hero-copy">
+      <h1 id="h1">Antes de que alguien lea tu perfil, un ranking ya decidió si <span class="hl">te ve</span>.</h1>
+      <div class="hero-side">
+        <p>Agustina y Belén estudiaron lo mismo. Una aparece arriba. A la otra hay que salir a buscarla.</p>
+        <div class="row">
+          <a class="btn" href="#datos" style="text-decoration:none">Empezar el recorrido ↓</a>
+          <button class="play" type="button" data-video="intro"><span class="ic">▶</span><span><small>Video</small>¿Quién decide que te vean?</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="dark" id="dark">
+      <div class="crowd" id="crowd" aria-hidden="true"></div>
+      <div class="shade" id="shade"></div>
+      <span class="toplbl">● Lo que el reclutador mira</span>
+      <span class="hint" id="hint">Mové la luz · buscá a Belén</span>
+      <div class="found-tip" id="tip" hidden></div>
+    </div>
+  </section>
+
+  <section class="sec" id="datos" aria-labelledby="h-datos">
+    <div class="sec-head">
+      <div>
+        <p class="eyebrow">Etapa 1 · Los datos</p>
+        <h2 id="h-datos">El algoritmo solo ve lo que entra en un formulario.</h2>
+        <p class="sub">Pasá el escáner por los dos perfiles.</p>
+      </div>
+      <button class="play" type="button" data-video="datos"><span class="ic">▶</span><span><small>Video</small>¿Qué pasa con lo que no entra?</span></button>
+    </div>
+    <div class="box">
+      <div class="scan-grid" id="scanGrid">
+        <article class="card" id="cardA"></article>
+        <article class="card" id="cardB"></article>
+      </div>
+      <div class="scan-ctrl">
+        <button class="btn" type="button" id="scanBtn">▶ Escanear</button>
+        <label for="scanR" class="note" style="white-space:nowrap">o arrastrá la barra</label>
+        <input type="range" id="scanR" min="0" max="100" value="0" aria-label="Posición del escáner">
+      </div>
+      <details class="more">
+        <summary>Ver el concepto y el dato</summary>
+        <div class="txt">
+          <p><b>Datificación</b>: las plataformas convierten aspectos de la vida en datos, y esos datos pasan a ser la condición para existir dentro del sistema (Van Dijck, Poell y De Waal, 2018).</p>
+          <p>Las dos tienen la misma formación. La diferencia es qué parte de su trayectoria entra en campos estructurados: cargos con nombre, empresas, fechas, certificaciones. Changas, trabajos sin factura y proyectos sueltos quedan como señal débil.</p>
+          <p class="note">Perfiles ficticios. El conteo de campos legibles es una simplificación, no una medición de LinkedIn.</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="box ai-box">
+      <div class="ai-head">
+        <div><p class="eyebrow">Mientras tanto, en el feed</p><h3>Para que el algoritmo te lea, empezamos a escribir igual.</h3></div>
+        <label class="toggle" for="aiT"><input type="checkbox" id="aiT"><span class="tr"></span>Mostrar los que probablemente escribió una IA</label>
+      </div>
+      <div class="ai-grid" id="aiGrid" role="img" aria-label="100 publicaciones largas"></div>
+      <div class="ai-foot"><div class="huge-s tabular" id="aiN">?<small>/100</small></div><p id="aiL">publicaciones largas en inglés. ¿Cuántas escribió una persona?</p></div>
+      <details class="more">
+        <summary>Ver el concepto y la fuente</summary>
+        <div class="txt">
+          <p>Según un análisis citado por Knibbs (2024) en Wired, el 54 % de los posts largos en inglés probablemente fueron generados con IA. Leído desde la <b>selección algorítmica</b> (Van Dijck et al., 2018): la gente adapta cómo se presenta a lo que cree que el algoritmo premia.</p>
+          <p class="note">Qué cuadros se iluminan es aleatorio; la proporción es la del análisis.</p>
+          <p class="src"><a href="https://www.wired.com/story/linkedin-ai-generated-influencers/" target="_blank" rel="noopener">Knibbs (2024)</a></p>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <section class="sec" id="ranking" aria-labelledby="h-rk">
+    <div class="sec-head">
+      <div>
+        <p class="eyebrow">Etapa 2 · El ranking</p>
+        <h2 id="h-rk">Cada clic vuelve al sistema como dato.</h2>
+        <p class="sub">Los reclutadores abren <span class="hl">13 % menos</span> los perfiles de mujeres. Dale play y mirá qué pasa con la luz.</p>
+      </div>
+      <button class="play" type="button" data-video="ranking"><span class="ic">▶</span><span><small>Video</small>¿Un clic puede discriminar?</span></button>
+    </div>
+    <div class="box">
+      <div class="ctrl">
+        <button class="btn" type="button" id="playSim">▶ Reproducir</button>
+        <button class="btn ghost" type="button" id="stepSim">+1 ronda</button>
+        <button class="btn ghost" type="button" id="resetSim">Reiniciar</button>
+        <span class="count tabular" id="roundLbl">Ronda 0 / 40</span>
+      </div>
+      <div class="rk-grid" style="margin-top:18px">
+        <div class="ladder" id="ladder"><div class="cone"><span>LO QUE EL RECLUTADOR MIRA</span></div></div>
+        <div>
+          <div class="bigpair">
+            <div><b class="tabular" id="bigW" style="color:var(--women)">60%</b><span>mujeres en el top 5 · son el 50 %</span></div>
+            <div><b class="tabular" id="bigI" style="color:var(--informal)">0%</b><span>informales en el top 5 · son el 33 %</span></div>
+          </div>
+          <div class="chart"><svg id="simChart" viewBox="0 0 300 190" role="img" aria-label="Porcentaje de mujeres y de perfiles informales en el top 5, ronda por ronda"></svg></div>
+          <div class="legend"><span><i style="background:var(--women)"></i>Mujeres</span><span><i style="background:var(--informal)"></i>Informales</span><span><i style="background:var(--dim); height:1px"></i>Si fuera parejo</span></div>
+          <div style="display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between; margin-top:16px; padding-top:14px; border-top:1px solid var(--faint)">
+            <label class="toggle" for="fix"><input type="checkbox" id="fix"><span class="tr"></span>Corrección por género</label>
+            <button class="play" type="button" data-video="correccion"><span class="ic">▶</span><span><small>Video</small>¿Alcanza con corregirse sola?</span></button>
+          </div>
+        </div>
+      </div>
+      <div class="verdict" id="verdict" aria-live="polite"></div>
+      <details class="more">
+        <summary>Ver el concepto, los supuestos y las fuentes</summary>
+        <div class="txt">
+          <p><b>Selección algorítmica</b>: la plataforma filtra y jerarquiza qué se ve (Van Dijck et al., 2018). El ranking de Recruiter se entrena con la interacción entre reclutadores y candidatos (LinkedIn, 2019b). Si una diferencia de clics alimenta el orden, el sesgo se acumula: quien baja recibe todavía menos clics.</p>
+          <p><b>Excedente conductual</b>: cada gesto del reclutador queda registrado y se vuelve materia prima para predecir a quién conviene mostrar (Zuboff, 2020).</p>
+          <p>LinkedIn detectó que su sistema recomendaba más hombres que mujeres y en 2018 agregó un reordenamiento por género (Wall y Schellmann, 2021; Geyik et al., 2019). Esa corrección cubre solo el género y la audita la propia empresa.</p>
+          <p class="note">Simulación ilustrativa: 12 perfiles, 5 reclutadores por ronda, 13 % menos de clics a mujeres (LinkedIn, 2019a) y menor legibilidad para trayectorias informales. No reproduce el algoritmo real, que no es público.</p>
+          <p class="src"><a href="https://news.linkedin.com/2019/January/linkedin-releases-2019-gender-insights-report" target="_blank" rel="noopener">LinkedIn (2019a)</a> · <a href="https://engineering.linkedin.com/blog/2019/04/ai-behind-linkedin-recruiter-search-and-recommendation-systems" target="_blank" rel="noopener">LinkedIn (2019b)</a> · <a href="https://www.technologyreview.com/2021/06/23/1026825/linkedin-ai-bias-ziprecruiter-monster-artificial-intelligence/" target="_blank" rel="noopener">Wall y Schellmann (2021)</a> · <a href="https://arxiv.org/abs/1905.01989" target="_blank" rel="noopener">Geyik et al. (2019)</a></p>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <section class="sec" id="pago" aria-labelledby="h-pago">
+    <div class="sec-head">
+      <div>
+        <p class="eyebrow">Etapa 3 · El pago</p>
+        <h2 id="h-pago">Unos pagan con plata. Otros, con datos.</h2>
+        <p class="sub">Tocá cada lado. Después hacé que Belén pague.</p>
+      </div>
+      <button class="play" type="button" data-video="pago"><span class="ic">▶</span><span><small>Video</small>¿Se puede comprar visibilidad?</span></button>
+    </div>
+    <div class="box">
+      <div class="pay-grid">
+        <div class="flow">
+          <svg id="flowSvg" viewBox="0 0 400 320" role="group" aria-label="Qué aporta y qué paga cada lado de la plataforma">
+            <defs>
+              <path id="pPro" d="M80 80 Q150 120 200 160"/>
+              <path id="pEmp" d="M320 80 Q250 120 200 160"/>
+              <path id="pAds" d="M200 285 L200 160"/>
+            </defs>
+            <path d="M80 80 Q150 120 200 160" stroke="#2A2F4A" stroke-width="2" fill="none"/>
+            <path d="M320 80 Q250 120 200 160" stroke="#2A2F4A" stroke-width="2" fill="none"/>
+            <path d="M200 285 L200 160" stroke="#2A2F4A" stroke-width="2" fill="none"/>
+            <g id="dots"></g>
+            <circle cx="200" cy="160" r="46" fill="#1C2036" stroke="#FFD43B" stroke-width="2"/>
+            <text x="200" y="157" text-anchor="middle" font-weight="700">LinkedIn</text>
+            <text x="200" y="174" text-anchor="middle" class="lbl">ordena y cobra</text>
+            <g class="node sel" data-side="pro" tabindex="0" role="button" aria-label="Profesionales">
+              <circle cx="80" cy="80" r="46" fill="#141729" stroke="#B49CFF" stroke-width="2"/>
+              <text x="80" y="84" text-anchor="middle" style="font-size:11px">Profesionales</text>
+            </g>
+            <g class="node" data-side="emp" tabindex="0" role="button" aria-label="Empresas y reclutadores">
+              <circle cx="320" cy="80" r="46" fill="#141729" stroke="#3DD598" stroke-width="2"/>
+              <text x="320" y="84" text-anchor="middle" style="font-size:12px">Empresas</text>
+            </g>
+            <g class="node" data-side="ads" tabindex="0" role="button" aria-label="Anunciantes">
+              <circle cx="200" cy="282" r="36" fill="#141729" stroke="#3DD598" stroke-width="2"/>
+              <text x="200" y="286" text-anchor="middle" style="font-size:11px">Anunciantes</text>
+            </g>
+          </svg>
+          <div class="legend" style="justify-content:center"><span><i style="background:var(--light); height:8px; width:8px; border-radius:50%"></i>Datos</span><span><i style="background:var(--paid); height:8px; width:8px; border-radius:50%"></i>Dinero</span></div>
+          <div class="side-card" id="sideCard" aria-live="polite"></div>
+        </div>
+        <div>
+          <div style="display:flex; flex-wrap:wrap; gap:10px; justify-content:space-between; align-items:center">
+            <span class="eyebrow">Bandeja del reclutador</span>
+            <label class="toggle" for="tc"><input type="checkbox" id="tc"><span class="tr"></span>Belén paga Premium</label>
+          </div>
+          <div class="inbox" id="inbox"></div>
+          <div class="meter" aria-label="Probabilidad relativa de recibir respuesta">
+            <div class="m"><span>Sin Top Choice</span><span class="t"><i style="width:70%"></i></span><b class="tabular">100</b></div>
+            <div class="m p"><span>Con Top Choice</span><span class="t"><i id="tcBar" style="width:0%"></i></span><b class="tabular" id="tcLbl">–</b></div>
+          </div>
+          <p class="note" style="margin-top:6px">Índice de respuesta relativo. El +43 % lo informa LinkedIn.</p>
+          <div class="money">
+            <div><b class="tabular">US$ 19.800 M</b><span>facturó LinkedIn en el año fiscal 2026</span></div>
+            <div><b class="tabular">+US$ 450 M</b><span>al año en herramientas de contratación con IA</span></div>
+          </div>
+        </div>
+      </div>
+      <details class="more">
+        <summary>Ver el concepto y las fuentes</summary>
+        <div class="txt">
+          <p><b>Plataforma multilateral y precios asimétricos</b>: se subsidia un lado para atraer al otro, que paga más (Parker, Van Alstyne y Choudary, 2016; Tirole, 2017). La mayoría de los profesionales no paga con dinero, pero aporta sus datos: para Srnicek (2018), esos datos son la materia prima del capitalismo de plataformas.</p>
+          <p>Con Top Choice, quien paga Premium marca hasta tres postulaciones por mes y el reclutador ve esa marca. Según LinkedIn, esos candidatos tienen un 43 % más de probabilidad de recibir respuesta. InMail da ventajas de contacto, no de posición.</p>
+          <p class="src"><a href="https://premium.linkedin.com/careers/career" target="_blank" rel="noopener">LinkedIn (s. f.-a)</a> · <a href="https://premium.linkedin.com/careers/get-hired-faster" target="_blank" rel="noopener">LinkedIn (s. f.-b)</a> · <a href="https://www.hrdive.com/news/linkedin-looks-help-candidates-stand-top-choice-job-application/697629/" target="_blank" rel="noopener">Hutchinson (2023)</a> · <a href="https://news.linkedin.com/2026/q4-earnings-and-business-highlights" target="_blank" rel="noopener">LinkedIn (2026)</a> · <a href="https://www.staffingindustry.com/news/global-daily-news/linkedin-revenue-rises-microsoft-ceo-highlights-sites-agentic-ai" target="_blank" rel="noopener">Johnson (2026)</a></p>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <section class="sec" id="contexto" aria-labelledby="h-ctx">
+    <div class="sec-head">
+      <div>
+        <p class="eyebrow">Etapa 4 · El contexto</p>
+        <h2 id="h-ctx">Casi la mitad de quienes trabajan en Argentina son Belén.</h2>
+        <p class="sub">200 trabajadores. Elegí un grupo.</p>
+      </div>
+      <button class="play" type="button" data-video="contexto"><span class="ic">▶</span><span><small>Video</small>¿Para quién está hecho LinkedIn?</span></button>
+    </div>
+    <div class="box">
+      <div class="tabs" role="tablist" aria-label="Informalidad laboral">
+        <button class="tab" role="tab" type="button" aria-selected="true" data-v="45" data-l="de cada 100 trabajadores son informales">Todos</button>
+        <button class="tab" role="tab" type="button" aria-selected="false" data-v="61" data-l="de cada 100 independientes son informales (61,1 %)">Independientes</button>
+        <button class="tab" role="tab" type="button" aria-selected="false" data-v="38" data-l="de cada 100 asalariados no están registrados (37,9 %)">Asalariados</button>
+      </div>
+      <div class="ctx-grid">
+        <div class="people" id="people" role="img" aria-label="45 de cada 100 trabajadores son informales"></div>
+        <div>
+          <div class="huge tabular" id="hugeN">45<small>/100</small></div>
+          <p id="hugeL" style="font-size:var(--s1); margin-top:8px">de cada 100 trabajadores son informales</p>
+          <p class="note" style="margin-top:10px">Desempleo: 7,9 %. INDEC, 2.º trimestre de 2026.</p>
+        </div>
+      </div>
+      <details class="more">
+        <summary>Ver por qué importa y la fuente</summary>
+        <div class="txt">
+          <p>LinkedIn está pensado para trayectorias formales y lineales. Para quienes trabajan en la informalidad, la desventaja empieza antes de cualquier búsqueda. La cultura de la marca personal suma otra exigencia: publicar, mostrarse y sostener una red.</p>
+          <p class="src"><a href="https://eleconomista.com.ar/economia/alerta-empleo-desempleo-toco-maximo-2021-hay-record-informales-n98259" target="_blank" rel="noopener">El Economista (2026), con datos del INDEC</a></p>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <section class="sec" id="reglas" aria-labelledby="h-reg">
+    <div class="sec-head">
+      <div>
+        <p class="eyebrow">Etapa 5 · Las reglas</p>
+        <h2 id="h-reg">¿Quién controla al que ordena?</h2>
+        <p class="sub">Filtrá por actor y deslizá la línea de tiempo.</p>
+      </div>
+      <button class="play" type="button" data-video="reglas"><span class="ic">▶</span><span><small>Video</small>¿Quién controla al algoritmo?</span></button>
+    </div>
+    <div class="box">
+      <div style="display:flex; flex-wrap:wrap; justify-content:space-between; gap:10px; align-items:center">
+        <div class="filters" role="group" aria-label="Filtrar por actor">
+          <button class="fchip" type="button" data-f="all" aria-pressed="true">Todos</button>
+          <button class="fchip" type="button" data-f="emp" aria-pressed="false"><i style="background:var(--alert)"></i>La empresa</button>
+          <button class="fchip" type="button" data-f="ue" aria-pressed="false"><i style="background:var(--women)"></i>Unión Europea</button>
+          <button class="fchip" type="button" data-f="ar" aria-pressed="false"><i style="background:var(--informal)"></i>Argentina</button>
+        </div>
+        <div class="arrows"><button class="arr" type="button" id="prevEv" aria-label="Anterior">←</button><button class="arr" type="button" id="nextEv" aria-label="Siguiente">→</button></div>
+      </div>
+      <div style="margin-top:14px"><div class="track" id="track"></div></div>
+      <details class="more">
+        <summary>Ver el concepto</summary>
+        <div class="txt">
+          <p><b>Gobernanza y valores públicos</b>: cuando una plataforma organiza un sector entero, como el acceso al empleo, sus reglas dejan de ser un asunto privado (Van Dijck et al., 2018). Hoy LinkedIn se autorregula; Europa logró cambiar prácticas concretas; Argentina tiene una ley de datos del año 2000.</p>
+          <p><b>Asimetría de conocimiento</b>: la plataforma sabe cómo funciona su sistema; postulantes y reguladores no pueden comprobarlo (Zuboff, 2020).</p>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <section class="sec" id="cierre" aria-labelledby="h-cierre">
+    <div class="sec-head">
+      <div>
+        <p class="eyebrow">Cierre</p>
+        <h2 id="h-cierre">Sumá las capas. Mirá a quién le llega la luz.</h2>
+        <p class="sub">Misma formación. Cinco capas de la plataforma.</p>
+      </div>
+      <button class="play" type="button" data-video="cierre"><span class="ic">▶</span><span><small>Video</small>¿Qué hacemos con esto?</span></button>
+    </div>
+    <div class="box">
+      <div class="layers" id="layers" role="group" aria-label="Capas"></div>
+      <div class="duo">
+        <div class="person" id="pA"><div class="av">A</div><h3>Agustina</h3><ul id="lA"></ul><div class="vis"><i id="vA" style="width:50%"></i></div></div>
+        <div class="person" id="pB"><div class="av">B</div><h3>Belén</h3><ul id="lB"></ul><div class="vis"><i id="vB" style="width:50%"></i></div></div>
+      </div>
+      <p class="note" style="margin-top:12px">Metáfora visual del recorrido, no una medición.</p>
+    </div>
+    <div class="box you">
+      <p class="eyebrow">Tu turno</p>
+      <h3>¿Y a vos, dónde te encuentra la luz?</h3>
+      <p class="sub2">Marcá lo que es verdad para vos.</p>
+      <div class="you-qs">
+        <label class="toggle" for="yq1"><input type="checkbox" id="yq1"><span class="tr"></span>Mi trabajo está registrado</label>
+        <label class="toggle" for="yq2"><input type="checkbox" id="yq2"><span class="tr"></span>Mi experiencia entra en los campos del perfil</label>
+        <label class="toggle" for="yq3"><input type="checkbox" id="yq3"><span class="tr"></span>Tengo más de 500 contactos</label>
+        <label class="toggle" for="yq4"><input type="checkbox" id="yq4"><span class="tr"></span>Puedo pagar Premium</label>
+      </div>
+      <div class="you-track" aria-hidden="true">
+        <div class="spot" id="ySpot">Vos</div>
+        <span class="lbl" style="left:8px">#1 · lo que el reclutador mira</span>
+        <span class="lbl" style="right:8px">#200</span>
+      </div>
+      <p class="you-out" id="yOut" aria-live="polite"></p>
+      <p class="note">No mide nada real. Cada respuesta mueve una luz de juguete para mostrar que tu lugar depende de cosas que no son tu capacidad.</p>
+    </div>
+
+    <h2 class="thesis">La visibilidad no refleja solo el mérito. Refleja <span class="hl">datos, clics y pagos</span> que la plataforma ordena con reglas propias.</h2>
+    <div class="qs">
+      <p>¿Quién debería poder auditar estos rankings?</p>
+      <p>¿Tienen derecho los postulantes a saber por qué no aparecen?</p>
+    </div>
+  </section>
+
+  <footer>
+    <details>
+      <summary class="eyebrow" style="cursor:pointer">Fuentes (<span id="srcN">20</span>)</summary>
+      <ol class="srclist" id="srcList"></ol>
+    </details>
+    <div class="cred">
+      <span>Seminario de Tópicos de Avanzada II: Plataformas Mediáticas · UADE · 2.º cuatrimestre 2026 · Docente: Mauro Limas</span>
+      <span>Esteban Roel · Francesca D'Abbraccio · Ignacio Burgos · Germán Ostaszewski · Lucas Kaufmann</span>
+    </div>
+    <p class="note">Agustina, Belén y la simulación de la etapa 2 son ficticias e ilustrativas. Los datos provienen de las fuentes listadas.</p>
+  </footer>
+</main>
+
+<dialog id="vd" aria-labelledby="vdT">
+  <div class="vd-head">
+    <div><p class="eyebrow" id="vdW">Problematizamos</p><h3 id="vdT"></h3></div>
+    <button class="vd-x" type="button" id="vdX" aria-label="Cerrar">✕</button>
+  </div>
+  <div class="vd-body" id="vdB"></div>
+</dialog>
+
+<script>
+/* ============================================================
+   VIDEOS — completar "src" cuando estén grabados.
+   Archivo subido junto a la página: "videos/intro.mp4"
+   Link externo (YouTube, Drive): se muestra un botón para abrirlo.
+   ============================================================ */
+const VIDEOS = {
+  intro:{src:"", who:"", title:"¿Quién decide que te vean?", g:["LinkedIn no es una vidriera neutral.","La pregunta del trabajo.","Agustina y Belén: misma formación, distinta visibilidad."]},
+  datos:{src:"", who:"", title:"¿Qué pasa con lo que no entra en un formulario?", g:["Qué es la datificación.","Por qué lo informal se lee peor.","Si tu experiencia no se puede cargar, ¿cuenta?"]},
+  ranking:{src:"", who:"", title:"¿Un clic puede discriminar?", g:["El 13 % y de dónde sale.","El clic se vuelve dato y el dato, posición.","Por qué el efecto se acumula."]},
+  correccion:{src:"", who:"", title:"¿Alcanza con que la empresa se corrija sola?", g:["LinkedIn detectó el sesgo y lo corrigió.","Corrige solo el género y lo audita ella misma.","Cautela: lo que no se puede verificar desde afuera."]},
+  pago:{src:"", who:"", title:"¿Se puede comprar visibilidad?", g:["Tres lados, precios asimétricos.","Top Choice y el +43 %.","La tensión entre equidad y negocio."]},
+  contexto:{src:"", who:"", title:"¿Para quién está hecho LinkedIn?", g:["45 % de informalidad.","La marca personal como exigencia desigual.","Mejorar el perfil no es solo un problema individual."]},
+  reglas:{src:"", who:"", title:"¿Quién controla al algoritmo?", g:["Autorregulación y auditorías internas.","Europa: multa, retiro de la segmentación, AI Act postergado.","Argentina: ley del 2000 y proyecto sin aprobar."]},
+  cierre:{src:"", who:"", title:"¿Qué hacemos con esto?", g:["Volver a Agustina y Belén.","Auditorías externas, derecho a la explicación, ley actualizada.","La pregunta para quien mira."]}
+};
+const SOURCES = [
+  ["Data Protection Commission (2024). Irish Data Protection Commission fines LinkedIn Ireland €310 million.","https://www.dataprotection.ie/en/news-media/press-releases/irish-data-protection-commission-fines-linkedin-ireland-eu310-million"],
+  ["Diario Judicial (2026). Al algoritmo también se lo audita [proyecto 3540-D-2025].","https://www.diariojudicial.com/news-101137-al-algoritmo-tambien-se-lo-audita"],
+  ["El Economista (2026). Desempleo al 7,9% y 45% de informalidad [datos del INDEC].","https://eleconomista.com.ar/economia/alerta-empleo-desempleo-toco-maximo-2021-hay-record-informales-n98259"],
+  ["Geyik, Ambler y Kenthapadi (2019). Fairness-aware ranking in search & recommendation systems with application to LinkedIn Talent Search.","https://arxiv.org/abs/1905.01989"],
+  ["Hutchinson (2023). LinkedIn looks to help candidates stand out with 'Top Choice' job application option. HR Dive.","https://www.hrdive.com/news/linkedin-looks-help-candidates-stand-top-choice-job-application/697629/"],
+  ["Johnson (2026). LinkedIn revenue rises, Microsoft CEO highlights site's agentic AI. Staffing Industry Analysts.","https://www.staffingindustry.com/news/global-daily-news/linkedin-revenue-rises-microsoft-ceo-highlights-sites-agentic-ai"],
+  ["Ley 25.326 de Protección de los Datos Personales (2000). Boletín Oficial de la República Argentina.",""],
+  ["LinkedIn (2019a). LinkedIn releases new report showcasing how gender impacts the candidate journey.","https://news.linkedin.com/2019/January/linkedin-releases-2019-gender-insights-report"],
+  ["LinkedIn (2019b). The AI behind LinkedIn Recruiter search and recommendation systems.","https://engineering.linkedin.com/blog/2019/04/ai-behind-linkedin-recruiter-search-and-recommendation-systems"],
+  ["LinkedIn (2023). Our Responsible AI Principles in practice.","https://engineering.linkedin.com/blog/2023/our-responsible-ai-principles-in-practice"],
+  ["LinkedIn (2026). Q4 earnings & business highlights.","https://news.linkedin.com/2026/q4-earnings-and-business-highlights"],
+  ["Knibbs (2024). Yes, that viral LinkedIn post you read was probably AI-generated. Wired.","https://www.wired.com/story/linkedin-ai-generated-influencers/"],
+  ["LinkedIn (s. f.-a). Premium Career.","https://premium.linkedin.com/careers/career"],
+  ["LinkedIn (s. f.-b). How to get a job faster with Premium.","https://premium.linkedin.com/careers/get-hired-faster"],
+  ["National Law Review (2026). EU Digital Omnibus on AI enters into force.","https://natlawreview.com/article/eu-digital-omnibus-ai-enters-force"],
+  ["NapoleonCat (2024). LinkedIn users in Argentina, February 2024.","https://stats.napoleoncat.com/linkedin-users-in-argentina/2024/02/"],
+  ["Parker, Van Alstyne y Choudary (2016). Platform revolution. W. W. Norton & Company.",""],
+  ["Srnicek (2018). Capitalismo de plataformas. Caja Negra.",""],
+  ["TechCrunch (2024). LinkedIn to limit targeted ads in EU after complaint over sensitive data use.","https://techcrunch.com/2024/06/07/linkedin-to-limit-targeted-ads-in-eu-after-complaint-over-sensitive-data-use"],
+  ["Tirole (2017). La economía del bien común. Taurus.",""],
+  ["Van Dijck, Poell y De Waal (2018). The platform society. Oxford University Press.",""],
+  ["Vinsel (2021). You're doing it wrong: Notes on criticism and technology hype. Medium.","https://sts-news.medium.com/youre-doing-it-wrong-notes-on-criticism-and-technology-hype-18b08b4307e5"],
+  ["Wall y Schellmann (2021). LinkedIn's job-matching AI was biased. The company's solution? More AI. MIT Technology Review.","https://www.technologyreview.com/2021/06/23/1026825/linkedin-ai-bias-ziprecruiter-monster-artificial-intelligence/"],
+  ["Zuboff (2020). La era del capitalismo de la vigilancia. Paidós.",""]
+];
+
+const $ = (s,r=document)=>r.querySelector(s), $$ = (s,r=document)=>[...r.querySelectorAll(s)];
+const esc = s => String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const REDUCED = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
+
+/* Video */
+const dlg = $("#vd");
+function openVideo(k){
+  const v = VIDEOS[k]; if(!v) return;
+  $("#vdT").textContent = v.title;
+  $("#vdW").textContent = v.who ? "Problematiza " + v.who : "Problematizamos";
+  const src = (v.src||"").trim(), b = $("#vdB");
+  if(src && /\.(mp4|webm|mov|m4v)(\?.*)?$/i.test(src)) b.innerHTML = '<video controls playsinline preload="metadata" src="'+esc(src)+'"></video>';
+  else if(src) b.innerHTML = '<div class="vd-ph"><p>Este video se abre en otra pestaña.</p><p><a class="btn" style="text-decoration:none" href="'+esc(src)+'" target="_blank" rel="noopener">Ver el video</a></p></div>';
+  else b.innerHTML = '<div class="vd-ph"><span class="stamp">Video en producción</span><p>Acá va el video del equipo. Va a tratar:</p><ul>'+v.g.map(x=>"<li>"+esc(x)+"</li>").join("")+'</ul></div>';
+  try{ dlg.showModal(); }catch(e){ dlg.setAttribute("open",""); }
+  const vid = $("video", b); if(vid){ const p = vid.play(); if(p&&p.catch) p.catch(()=>{}); }
+}
+function closeVideo(){ const vid = $("video", dlg); if(vid) vid.pause(); if(dlg.close) dlg.close(); else dlg.removeAttribute("open"); }
+$$("[data-video]").forEach(b=>b.addEventListener("click", ()=>openVideo(b.dataset.video)));
+$("#vdX").addEventListener("click", closeVideo);
+dlg.addEventListener("click", e=>{ if(e.target===dlg) closeVideo(); });
+dlg.addEventListener("close", ()=>{ const vid=$("video",dlg); if(vid) vid.pause(); });
+
+/* HERO: linterna */
+const NAMES = ["Agustina","Bruno","Carla","Facundo","Hernán","Eva","Martín","Julieta","Tomás","Sofía","Pablo","Lucía","Nicolás","Paula","Ramiro","Valeria","Joaquín","Mara","Andrés","Dana","Diego","Gastón","Inés","Belén"];
+const crowd = $("#crowd");
+crowd.innerHTML = NAMES.map((n,i)=>'<div class="chip'+(i<4?" top":"")+'" data-n="'+esc(n)+'"><div class="av">'+n[0]+'</div><div class="meta"><span>'+esc(n)+'</span><i style="width:'+(92-i*3)+'%"></i></div><span class="pos">#'+(i+1)+'</span></div>').join("");
+const dark = $("#dark"), shade = $("#shade"), tip = $("#tip");
+let touched = false; const t0 = performance.now();
+function setLight(x, y){
+  shade.style.setProperty("--x", (x*100)+"%"); shade.style.setProperty("--y", (y*100)+"%");
+  const r = dark.getBoundingClientRect(), px = x*r.width, py = y*r.height;
+  const c = $('.chip[data-n="Belén"]', crowd), cr = c.getBoundingClientRect();
+  const cx = cr.left - r.left + cr.width/2, cy = cr.top - r.top + cr.height/2;
+  const near = Math.hypot(cx-px, cy-py) < 80;
+  c.classList.toggle("found", near);
+  if(near){ tip.hidden = false; tip.style.left = Math.min(r.width-110, Math.max(110, cx))+"px"; tip.style.top = (cr.top - r.top)+"px"; tip.textContent = "¡La encontraste! Belén · puesto #24"; if(touched) $("#hint").textContent = "Belén estaba al final"; }
+  else tip.hidden = true;
+}
+function onMove(e){
+  const r = dark.getBoundingClientRect(), p = e.touches ? e.touches[0] : e;
+  touched = true;
+  setLight(Math.min(1,Math.max(0,(p.clientX-r.left)/r.width)), Math.min(1,Math.max(0,(p.clientY-r.top)/r.height)));
+}
+dark.addEventListener("pointermove", onMove);
+dark.addEventListener("touchmove", onMove, {passive:true});
+function wander(t){
+  if(touched) return;
+  const s = (t - t0)/1000; setLight(.5 + .36*Math.sin(s*.45), .34 + .2*Math.sin(s*.7 + 1));
+  requestAnimationFrame(wander);
+}
+setLight(.5,.36);
+if(!REDUCED) requestAnimationFrame(wander);
+
+/* 1: escáner */
+const PROF = {
+  cardA:{n:"Agustina", s:"trayectoria formal", c:"var(--light)", f:[["Cargo","Analista de datos · empresa de consumo",1],["Período","mar. 2021 – hoy",1],["Formación","Lic. en Economía",1],["Aptitudes","SQL · Excel · Power BI",1],["Certificación","Análisis de datos (con certificado)",1],["Contactos","500+",1],["Recomendaciones","4",1],["Actividad","publica dos veces por mes",1]]},
+  cardB:{n:"Belén", s:"trayectoria informal", c:"var(--informal)", f:[["Cargo","Trabajos independientes",0],["Período","2019 – hoy, por proyecto",0],["Formación","Lic. en Economía",1],["Aptitudes","SQL · Excel · Power BI",1],["Experiencia","Informes para comercios del barrio, sin factura",0],["Contactos","38",0],["Recomendaciones","0",0],["Actividad","no publica",0]]}
+};
+const CIRC = 2*Math.PI*22;
+Object.entries(PROF).forEach(([id,p])=>{
+  $("#"+id).innerHTML = '<div class="beam"></div><div class="card-top"><div class="av" style="background:'+p.c+'">'+p.n[0]+'</div><div><h3>'+p.n+'</h3><p>'+p.s+'</p></div><div class="ring"><svg viewBox="0 0 50 50"><circle cx="25" cy="25" r="22" fill="none" stroke="#2A2F4A" stroke-width="5"/><circle class="arc" cx="25" cy="25" r="22" fill="none" stroke="#FFD43B" stroke-width="5" stroke-linecap="round" stroke-dasharray="0 '+CIRC+'"/></svg><b class="tabular">0/8</b></div></div><ul class="fields">'+p.f.map(f=>'<li class="'+(f[2]?"ok":"no")+'"><span class="k">'+esc(f[0])+'</span><span>'+esc(f[1])+'</span></li>').join("")+'</ul>';
+});
+function setScan(v){
+  $("#scanGrid").classList.toggle("scanning", v>0 && v<100);
+  Object.keys(PROF).forEach(id=>{
+    const card = $("#"+id), y = v/100*card.offsetHeight;
+    $(".beam", card).style.top = y+"px";
+    let ok = 0; const lis = $$(".fields li", card);
+    lis.forEach(li=>{ const on = li.offsetTop + li.offsetHeight/2 < y; li.classList.toggle("on", on); if(on && li.classList.contains("ok")) ok++; });
+    $(".arc", card).setAttribute("stroke-dasharray", (ok/lis.length*CIRC)+" "+CIRC);
+    $(".ring b", card).textContent = ok+"/"+lis.length;
+  });
+}
+$("#scanR").addEventListener("input", e=>setScan(+e.target.value));
+let scanAnim = null;
+$("#scanBtn").addEventListener("click", ()=>{
+  if(scanAnim) cancelAnimationFrame(scanAnim);
+  const r = $("#scanR"), start = performance.now(), dur = REDUCED ? 1 : 2600;
+  const tick = t=>{ const v = Math.min(100, (t-start)/dur*100); r.value = v; setScan(v); scanAnim = v<100 ? requestAnimationFrame(tick) : null; };
+  scanAnim = requestAnimationFrame(tick);
+});
+setScan(0);
+
+/* 2: simulación */
+const POOL = [
+  {n:"Agustina",w:1,inf:0},{n:"Carla",w:1,inf:0},{n:"Eva",w:1,inf:0},{n:"Julieta",w:1,inf:0},{n:"Belén",w:1,inf:1},{n:"Dana",w:1,inf:1},
+  {n:"Bruno",w:0,inf:0},{n:"Facundo",w:0,inf:0},{n:"Hernán",w:0,inf:0},{n:"Martín",w:0,inf:0},{n:"Diego",w:0,inf:1},{n:"Gastón",w:0,inf:1}
+];
+// Supuestos: 5 reclutadores por ronda; 13 % menos de clics a mujeres; trayectoria informal = 72 % de legibilidad.
+const MAXR=40, ROWH=38, TOP=5, K=5, PRIOR=15, DECAY=.08, PEN=.87;
+const JIT=[.09,.07,.05,.03,.02,.01,.08,.06,.04,.02,.015,.005];
+let S, playing=null;
+function rng(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function score(i){ return (POOL[i].inf?.72:1)*(S.opens[i]+PRIOR)+JIT[i]; }
+function order(){
+  const base = POOL.map((_,i)=>i).sort((a,b)=>score(b)-score(a));
+  if(!$("#fix").checked) return base;
+  const out=[], rest=base.slice();
+  for(let k=1;k<=POOL.length;k++){
+    const wN=out.filter(i=>POOL[i].w).length, mN=out.length-wN, need=Math.floor(k*.5);
+    let p; if(wN<need) p=rest.find(i=>POOL[i].w); else if(mN<need) p=rest.find(i=>!POOL[i].w);
+    if(p===undefined) p=rest[0]; out.push(p); rest.splice(rest.indexOf(p),1);
+  }
+  return out;
+}
+const met = o=>({w:o.slice(0,TOP).filter(i=>POOL[i].w).length/TOP*100, inf:o.slice(0,TOP).filter(i=>POOL[i].inf).length/TOP*100});
+function initSim(){
+  stopPlay();
+  S={round:0, opens:POOL.map(()=>0), r:rng(2026), hist:[], last:POOL.map(()=>0)};
+  S.order=order(); S.hist.push(met(S.order));
+  const lad=$("#ladder"); $$(".rrow",lad).forEach(x=>x.remove());
+  POOL.forEach((p,i)=>{
+    const d=document.createElement("div"); d.className="rrow"; d.dataset.i=i;
+    d.innerHTML='<span class="n tabular"></span><span class="av '+(p.w?"w":"m")+'">'+p.n[0]+'</span><span class="nm">'+esc(p.n)+(p.inf?' <span class="inf">informal</span>':'')+'</span><span class="bar"><i></i></span>';
+    lad.appendChild(d);
+  });
+  render();
+  $("#verdict").innerHTML = $("#fix").checked
+    ? "Corrección activada. Dale play: mirá qué pasa con las mujeres <b>y</b> con los perfiles informales."
+    : "Doce perfiles con la misma formación. Cada ronda, cinco reclutadores miran la lista de arriba hacia abajo. Dale play.";
+}
+function step(){
+  if(S.round>=MAXR) return false;
+  const before=S.opens.slice();
+  for(let k=0;k<K;k++) S.order.forEach((i,pos)=>{ if(S.r() < .9*Math.exp(-DECAY*pos)*(POOL[i].w?PEN:1)) S.opens[i]++; });
+  S.last=S.opens.map((v,i)=>v-before[i]);
+  S.round++; S.order=order(); S.hist.push(met(S.order));
+  return true;
+}
+function render(){
+  const mx=Math.max(...POOL.map((_,i)=>score(i)));
+  S.order.forEach((i,pos)=>{
+    const d=$('.rrow[data-i="'+i+'"]'); d.style.top=(pos*ROWH+4)+"px"; d.classList.toggle("lit",pos<TOP);
+    $(".n",d).textContent=pos+1; $(".bar i",d).style.width=Math.round(score(i)/mx*100)+"%";
+    const av=$(".av",d); av.classList.remove("flash");
+    if(S.last[i]>=4){ void av.offsetWidth; av.classList.add("flash"); }
+  });
+  const m=S.hist[S.hist.length-1];
+  $("#bigW").textContent=Math.round(m.w)+"%"; $("#bigI").textContent=Math.round(m.inf)+"%";
+  $("#roundLbl").textContent="Ronda "+S.round+" / "+MAXR;
+  $("#stepSim").disabled=S.round>=MAXR;
+  chart(); verdict();
+}
+function verdict(){
+  if(S.round<6) return;
+  const m=S.hist[S.hist.length-1];
+  if(!$("#fix").checked){
+    $("#verdict").innerHTML = m.w<50
+      ? "Ronda "+S.round+": las mujeres ocupan el <b>"+Math.round(m.w)+" %</b> de lo que mira el reclutador, aunque son la mitad. Ahora activá la corrección."
+      : "Por ahora parejo. Seguí: la diferencia de clics se acumula.";
+  } else {
+    $("#verdict").innerHTML = "Con la corrección, las mujeres no bajan del <b>40 %</b>. Los perfiles informales siguen en el <b>"+Math.round(m.inf)+" %</b>, aunque son un tercio: la corrección no los alcanza.";
+  }
+}
+function chart(){
+  const W=300,H=190,L=30,R=8,T=8,B=22,iw=W-L-R,ih=H-T-B, x=r=>L+r/MAXR*iw, y=v=>T+(100-v)/100*ih;
+  let g="";
+  [0,50,100].forEach(v=>{ g+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+y(v)+'" y2="'+y(v)+'" stroke="#2A2F4A"/><text x="'+(L-6)+'" y="'+(y(v)+3)+'" text-anchor="end">'+v+'%</text>'; });
+  [0,20,40].forEach(r=>{ g+='<text x="'+x(r)+'" y="'+(H-6)+'" text-anchor="middle">'+r+'</text>'; });
+  g+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+y(50)+'" y2="'+y(50)+'" stroke="#B49CFF" stroke-dasharray="3 3" opacity=".5"/>';
+  g+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+y(33.3)+'" y2="'+y(33.3)+'" stroke="#3CC6DC" stroke-dasharray="3 3" opacity=".5"/>';
+  const line=k=>S.hist.map((h,r)=>(r?"L":"M")+x(r).toFixed(1)+" "+y(h[k]).toFixed(1)).join(" ");
+  const lr=S.hist.length-1;
+  g+='<path d="'+line("w")+" L"+x(lr).toFixed(1)+" "+y(0)+" L"+x(0)+" "+y(0)+' Z" fill="#B49CFF" opacity=".12"/>';
+  g+='<path d="'+line("w")+'" fill="none" stroke="#B49CFF" stroke-width="2.5" stroke-linejoin="round"/>';
+  g+='<path d="'+line("inf")+'" fill="none" stroke="#3CC6DC" stroke-width="2.5" stroke-linejoin="round"/>';
+  const m=S.hist[lr];
+  g+='<circle cx="'+x(lr)+'" cy="'+y(m.w)+'" r="4" fill="#B49CFF"/><circle cx="'+x(lr)+'" cy="'+y(m.inf)+'" r="4" fill="#3CC6DC"/>';
+  $("#simChart").innerHTML=g;
+}
+function stopPlay(){ if(playing){ clearInterval(playing); playing=null; } $("#playSim").textContent="▶ Reproducir"; }
+$("#playSim").addEventListener("click", ()=>{
+  if(playing){ stopPlay(); return; }
+  if(S.round>=MAXR) initSim();
+  $("#playSim").textContent="❚❚ Pausa";
+  playing=setInterval(()=>{ if(!step()){ stopPlay(); return; } render(); if(S.round>=MAXR) stopPlay(); }, REDUCED?60:380);
+});
+$("#stepSim").addEventListener("click", ()=>{ if(step()) render(); });
+$("#resetSim").addEventListener("click", initSim);
+$("#fix").addEventListener("change", initSim);
+initSim();
+
+/* 3: flujos */
+const NS="http://www.w3.org/2000/svg";
+function addDots(path, color, n, dur, r){
+  const g=$("#dots");
+  for(let k=0;k<n;k++){
+    const c=document.createElementNS(NS,"circle"); c.setAttribute("r",r); c.setAttribute("fill",color);
+    const a=document.createElementNS(NS,"animateMotion"); a.setAttribute("dur",dur+"s"); a.setAttribute("repeatCount","indefinite"); a.setAttribute("begin",(k*dur/n).toFixed(2)+"s");
+    const mp=document.createElementNS(NS,"mpath"); mp.setAttribute("href","#"+path); a.appendChild(mp); c.appendChild(a); g.appendChild(c);
+  }
+}
+addDots("pPro","#FFD43B",7,3.2,4);
+addDots("pPro","#3DD598",1,3.2,5.5);
+addDots("pEmp","#3DD598",6,2.6,5.5);
+addDots("pAds","#3DD598",5,2.4,5.5);
+if(REDUCED && $("#flowSvg").pauseAnimations) $("#flowSvg").pauseAnimations();
+const SIDES={
+  pro:{a:"Perfil, trayectoria, actividad y datos de conducta.",o:"Red de contactos, visibilidad, ofertas.",p:"La mayoría, nada en dinero. Una parte paga Premium."},
+  emp:{a:"Vacantes y búsquedas.",o:"Acceso filtrado y jerarquizado al talento.",p:"Licencias de Recruiter y avisos."},
+  ads:{a:"Campañas.",o:"Audiencia profesional segmentada.",p:"Publicidad: +16 % en el año fiscal 2026."}
+};
+function side(k){
+  $$(".node").forEach(n=>n.classList.toggle("sel", n.dataset.side===k));
+  const s=SIDES[k];
+  $("#sideCard").innerHTML='<p><span class="k">Aporta</span>'+esc(s.a)+'</p><p><span class="k">Obtiene</span>'+esc(s.o)+'</p><p><span class="k">Paga</span>'+esc(s.p)+'</p>';
+}
+$$(".node").forEach(n=>{ n.addEventListener("click",()=>side(n.dataset.side)); n.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); side(n.dataset.side); } }); });
+side("pro");
+const INBOX=["Facundo","Belén","Carla","Diego","Eva"];
+function inbox(){
+  const on=$("#tc").checked;
+  $("#inbox").innerHTML=INBOX.map(n=>{ const p=on&&n==="Belén"; return '<div class="app'+(p?" paid":"")+'"><span class="av"'+(n==="Belén"?' style="background:var(--informal); color:var(--night)"':'')+'>'+n[0]+'</span><span>'+esc(n)+' <span class="note">· Analista de datos</span></span>'+(p?'<span class="badge">★ Top Choice</span>':'')+'</div>'; }).join("");
+  $("#tcBar").style.width=on?"100%":"0%"; $("#tcLbl").textContent=on?"143":"–";
+}
+$("#tc").addEventListener("change", inbox); inbox();
+
+/* 4: personas */
+const people=$("#people"); people.innerHTML=Array.from({length:200},()=>"<i></i>").join("");
+let pTimer=null;
+function fill(v){
+  const cells=$$("i",people), target=v*2; if(pTimer){ clearInterval(pTimer); pTimer=null; }
+  if(REDUCED){ cells.forEach((c,i)=>c.classList.toggle("on", i<target)); return; }
+  cells.forEach(c=>c.classList.remove("on")); let k=0;
+  pTimer=setInterval(()=>{ for(let j=0;j<8 && k<target;j++,k++) cells[k].classList.add("on"); if(k>=target){ clearInterval(pTimer); pTimer=null; } }, 18);
+}
+$$(".tab").forEach(t=>t.addEventListener("click",()=>{
+  $$(".tab").forEach(x=>x.setAttribute("aria-selected", String(x===t)));
+  $("#hugeN").innerHTML=t.dataset.v+"<small>/100</small>"; $("#hugeL").textContent=t.dataset.l;
+  people.setAttribute("aria-label", t.dataset.v+" de cada 100 · "+t.textContent);
+  fill(+t.dataset.v);
+}));
+$$("i",people).forEach((c,i)=>c.classList.toggle("on", i<90));
+if("IntersectionObserver" in window && !REDUCED){
+  let done=false;
+  new IntersectionObserver((en,ob)=>{ en.forEach(e=>{ if(e.isIntersecting && !done){ done=true; fill(45); ob.disconnect(); } }); },{threshold:.4}).observe(people);
+}
+
+/* 5: línea de tiempo */
+const LANE={emp:["La empresa","var(--alert)"], ue:["Unión Europea","var(--women)"], ar:["Argentina","var(--informal)"]};
+const EV=[
+  {l:"ar",y:"2000",t:"Ley 25.326",d:"Ley de datos personales. Sigue vigente, sin reglas sobre decisiones automatizadas.",s:["Ley 25.326",""]},
+  {l:"emp",y:"2018",t:"Reordena por género",d:"Detecta que recomendaba más hombres y lo corrige con otro algoritmo. Lo audita ella misma.",s:["Wall y Schellmann (2021)","https://www.technologyreview.com/2021/06/23/1026825/linkedin-ai-bias-ziprecruiter-monster-artificial-intelligence/"]},
+  {l:"emp",y:"2023",t:"Principios de IA",d:"Publica principios de IA responsable. Auditorías internas, no verificables desde afuera.",s:["LinkedIn (2023)","https://engineering.linkedin.com/blog/2023/our-responsible-ai-principles-in-practice"]},
+  {l:"ue",y:"2024",t:"Retira la segmentación",d:"Tras una denuncia civil bajo la DSA, deja de segmentar anuncios por grupos con datos sensibles. Solo en la UE.",s:["TechCrunch (2024)","https://techcrunch.com/2024/06/07/linkedin-to-limit-targeted-ads-in-eu-after-complaint-over-sensitive-data-use"]},
+  {l:"ue",y:"2024",t:"Multa de €310 M",d:"Irlanda la multa por usar datos personales para publicidad y análisis conductual sin base legal.",s:["Data Protection Commission (2024)","https://www.dataprotection.ie/en/news-media/press-releases/irish-data-protection-commission-fines-linkedin-ireland-eu310-million"]},
+  {l:"ar",y:"2025",t:"Proyecto 3540-D",d:"Propone derecho a la explicación y auditorías de sistemas automatizados. No fue aprobado.",s:["Diario Judicial (2026)","https://www.diariojudicial.com/news-101137-al-algoritmo-tambien-se-lo-audita"]},
+  {l:"ue",y:"2026",t:"Se aprueba la postergación",d:"El Reglamento (UE) 2026/1744 posterga las reglas para la IA que filtra candidatos, consideradas de alto riesgo.",s:["National Law Review (2026)","https://natlawreview.com/article/eu-digital-omnibus-ai-enters-force"]},
+  {l:"ue",y:"2027",t:"Nueva fecha: diciembre",d:"El 2 de diciembre de 2027 empiezan a regir. Hasta entonces, no son obligatorias.",s:["National Law Review (2026)","https://natlawreview.com/article/eu-digital-omnibus-ai-enters-force"]}
+];
+$("#track").innerHTML=EV.map(e=>'<article class="ev" data-l="'+e.l+'" style="--c:'+LANE[e.l][1]+'"><span class="yr tabular">'+e.y+'</span><span class="lane">'+LANE[e.l][0]+'</span><h3>'+esc(e.t)+'</h3><p>'+esc(e.d)+'</p><p class="src">'+(e.s[1]?'<a href="'+esc(e.s[1])+'" target="_blank" rel="noopener">'+esc(e.s[0])+'</a>':esc(e.s[0]))+'</p></article>').join("");
+$$(".fchip").forEach(b=>b.addEventListener("click",()=>{
+  $$(".fchip").forEach(x=>x.setAttribute("aria-pressed", String(x===b)));
+  $$(".ev").forEach(ev=>ev.hidden = !(b.dataset.f==="all" || ev.dataset.l===b.dataset.f));
+  $("#track").scrollTo({left:0, behavior:REDUCED?"auto":"smooth"});
+}));
+$("#prevEv").addEventListener("click",()=>$("#track").scrollBy({left:-284, behavior:REDUCED?"auto":"smooth"}));
+$("#nextEv").addEventListener("click",()=>$("#track").scrollBy({left:284, behavior:REDUCED?"auto":"smooth"}));
+
+/* Cierre: capas */
+const LAYERS=[
+  ["datos","Los datos","Trayectoria legible","Lo informal se lee peor"],
+  ["clics","El ranking","Recibe clics y sube","Menos clics, baja"],
+  ["pago","El pago","Puede pagar ventajas","Compite con quien paga"],
+  ["contexto","El contexto","Mercado formal","Parte del 45 % informal"],
+  ["reglas","Las reglas","Nadie le explica el orden","Nadie le explica el orden"]
+];
+const on=new Set();
+$("#layers").innerHTML=LAYERS.map(l=>'<button class="layer" type="button" data-k="'+l[0]+'" aria-pressed="false">+ '+l[1]+'</button>').join("");
+function layers(){
+  const n=on.size;
+  $("#vA").style.width=(50+n*9)+"%"; $("#vB").style.width=Math.max(4,50-n*9)+"%";
+  $("#pA").style.boxShadow=n?"0 0 "+(20+n*10)+"px rgba(255,212,59,"+(0.08+n*0.05)+")":"none";
+  $("#pB").style.opacity=String(1-n*0.1);
+  const bav=$("#pB .av"); bav.style.background=n>=3?"var(--faint)":"var(--light)"; bav.style.color=n>=3?"var(--dim)":"var(--light-ink)";
+  const act=LAYERS.filter(l=>on.has(l[0]));
+  $("#lA").innerHTML=act.map(l=>"<li>+ "+esc(l[2])+"</li>").join("");
+  $("#lB").innerHTML=act.map(l=>"<li>− "+esc(l[3])+"</li>").join("");
+}
+$$(".layer").forEach(b=>b.addEventListener("click",()=>{ const k=b.dataset.k; if(on.has(k)) on.delete(k); else on.add(k); b.setAttribute("aria-pressed", String(on.has(k))); layers(); }));
+layers();
+
+/* 1b: feed */
+const aiG=$("#aiGrid"), rA=rng(54), rB=rng(7), aiIdx=new Set();
+aiG.innerHTML=Array.from({length:100},()=>'<i style="--a:'+(40+rA()*55|0)+'%;--b:'+(22+rA()*58|0)+'%"></i>').join("");
+while(aiIdx.size<54) aiIdx.add(Math.floor(rB()*100));
+$("#aiT").addEventListener("change",e=>{
+  const on=e.target.checked, tiles=$$("i",aiG);
+  tiles.forEach((t,i)=>{ if(!aiIdx.has(i)) return; if(REDUCED||!on) t.classList.toggle("ai",on); else setTimeout(()=>t.classList.add("ai"), i*7); });
+  $("#aiN").innerHTML=(on?"54":"?")+"<small>/100</small>";
+  $("#aiL").textContent=on?"publicaciones largas en inglés probablemente las generó una IA. Y empiezan a sonar parecido.":"publicaciones largas en inglés. ¿Cuántas escribió una persona?";
+});
+
+/* Cierre: tu turno */
+const YQ=$$(".you-qs input");
+const YPOS=[160,110,65,30,8];
+const YTXT=["Puesto #160 de 200. El reclutador no llega a verte, aunque tengas la misma formación que quien está arriba.",
+ "Puesto #110. Ya aparecés, pero lejos de lo que el reclutador mira primero.",
+ "Puesto #65. Estás en el borde de la luz.",
+ "Puesto #30. Te ven. Buena parte de esa ventaja no la elegiste.",
+ "Puesto #8. Te ven primero. Ahora pensá en quien quedó en el #160."];
+function you(){ const n=YQ.filter(x=>x.checked).length, p=YPOS[n];
+  $("#ySpot").style.left=Math.max(6,Math.min(94,p/200*100))+"%"; $("#ySpot").classList.toggle("lit", p<=65); $("#yOut").textContent=YTXT[n]; }
+YQ.forEach(x=>x.addEventListener("change",you)); you();
+
+/* Fuentes y nav */
+$("#srcN").textContent=SOURCES.length;
+$("#srcList").innerHTML=SOURCES.map(s=>"<li>"+esc(s[0])+(s[1]?' <a href="'+esc(s[1])+'" target="_blank" rel="noopener">Abrir</a>':"")+"</li>").join("");
+const navA=$$(".nav a");
+if("IntersectionObserver" in window){
+  const io=new IntersectionObserver(en=>en.forEach(e=>{ if(e.isIntersecting) navA.forEach(a=>a.classList.toggle("on", a.getAttribute("href")==="#"+e.target.id)); }),{rootMargin:"-45% 0px -50% 0px"});
+  $$("section[id]").forEach(s=>io.observe(s));
+}
+</script>
+
+</body></html>
